@@ -9,6 +9,7 @@ set -euxo pipefail
 
 args=${k3d_args---network fleet}
 docker_mirror=${docker_mirror-}
+api_bind_host=${api_bind_host-127.0.0.1}
 unique_api_port=${unique_api_port-36443}
 unique_tls_port=${unique_tls_port-443}
 METRICS_GITJOB_PORT=${METRICS_GITJOB_PORT-}
@@ -45,7 +46,7 @@ fi
 
 k3d cluster create "$name" \
   --servers 3 \
-  --api-port "$unique_api_port" \
+  --api-port "${api_bind_host}:${unique_api_port}" \
   -p "$(( 8080 + offs )):8080@server:0" \
   -p "$(( 8081 + offs )):8081@server:0" \
   -p "$(( 8082 + offs )):8082@server:0" \

@@ -1,3 +1,7 @@
+## Additional Guide
+
+For a full article-style walkthrough of local Fleet development, local Rancher testing, custom image handling, and using the same image in a predeployed cluster, see [FLEET_DEVELOPMENT_SETUP.md](./FLEET_DEVELOPMENT_SETUP.md).
+
 # Logging
 
 Instructions on writing useful, well-formatted log messages can be found [here](./LOGGING.md).

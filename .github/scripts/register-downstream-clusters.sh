@@ -4,8 +4,34 @@ set -euxo pipefail
 
 
 public_hostname="${public_hostname-172.28.0.2.sslip.io}"
-cluster_downstream="${cluster_downstream-k3d-downstream}"
+rancher_url="${rancher_url-https://$public_hostname}"
+cluster_downstream="${cluster_downstream-${FLEET_E2E_CLUSTER_DOWNSTREAM-k3d-downstream1}}"
 ctx=$(kubectl config current-context)
+
+resolve_k3d_context() {
+  local requested="$1"
+  local prefix="${requested%[0-9]*}"
+  local context
+
+  if kubectl config get-contexts -o name | grep -Fxq "$requested"; then
+    printf '%s\n' "$requested"
+    return 0
+  fi
+
+  while IFS= read -r context; do
+    case "$context" in
+      ${prefix}|${prefix}[0-9]*)
+        printf '%s\n' "$context"
+        return 0
+        ;;
+    esac
+  done < <(kubectl config get-contexts -o name)
+
+  echo "unable to resolve kube context for downstream cluster: $requested" >&2
+  return 1
+}
+
+cluster_downstream=$(resolve_k3d_context "$cluster_downstream")
 
 # hardcoded token, cluster is ephemeral and private
 token="token-ci:zfllcbdr4677rkj4hmlr8rsmljg87l7874882928khlfs2pmmcq7l5"
@@ -36,7 +62,7 @@ userPrincipal:
 EOF
 
 # Log into the 4th project listed by `rancher login`, which should be the local cluster's default project.
-echo -e "4\n" | rancher login "https://$public_hostname" --token "$token" --skip-verify
+echo -e "4\n" | rancher login "$rancher_url" --token "$token" --skip-verify
 
 rancher clusters create second --import
 until rancher cluster ls --format json | jq -r 'select(.Name=="second") | .ID' | grep -Eq "c-[a-z0-9]" ; do sleep 1; done

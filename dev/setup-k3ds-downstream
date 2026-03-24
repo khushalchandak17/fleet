@@ -5,6 +5,7 @@ set -euxo pipefail
 
 args=${k3d_args---network fleet}
 docker_mirror=${docker_mirror-}
+api_bind_host=${api_bind_host-127.0.0.1}
 name="downstream"
 FLEET_E2E_DS_CLUSTER_COUNT=${FLEET_E2E_DS_CLUSTER_COUNT-1}
 
@@ -24,7 +25,7 @@ fi
 for i in $(seq 1 "$FLEET_E2E_DS_CLUSTER_COUNT"); do
   k3d cluster create "$name$i" \
     --servers 1 \
-    --api-port $((36443 + i)) \
+    --api-port "${api_bind_host}:$((36443 + i))" \
     -p "$((4080 + (1000 * i))):80@server:0" \
     -p "$((3443 + i)):443@server:0" \
     --k3s-arg "--tls-san=k3d-$name$i-server-0@server:0" \
